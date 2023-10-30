@@ -1,7 +1,8 @@
 ---
-title: 3D目标检测-六篇Lidar模型工作汇总
-date: 2023-10-20 11:07:50
-tags:
+layout: post
+title: "3D目标检测-六篇Lidar模型工作汇总"
+date: 2023-10-30 11:08:45 +0800
+categories: share
 ---
 
 总结2023年前后的一些基于Lidar方案的3D Detection文章和开源项目的分享。
