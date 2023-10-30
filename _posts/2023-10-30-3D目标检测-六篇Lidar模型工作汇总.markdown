@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: _posts
 title: "3D目标检测-六篇Lidar模型工作汇总"
 date: 2023-10-30 11:08:45 +0800
 categories: share
