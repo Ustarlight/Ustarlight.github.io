@@ -847,16 +847,6 @@ $$
 
 GeLU激活函数及其导数图像（和Swish非常像。。）
 $$
-backup:      ::::::::::::::::::::::::
-\begin{aligned}
-\text { depth } & d=\alpha^\phi \\
-\text { width } & w=\beta^\phi \\
-\text { resolution } & r=\lambda^\phi \\
-\text { s.t. } & \alpha \cdot \beta^2 \cdot \lambda^2 \approx 2 \\
-& \alpha \geq 1, \beta \geq 1, \lambda \geq 1
-\end{aligned}
-
-\\
 
 B N\left(y_j\right)^{(b)}=\gamma \cdot\left(\frac{y_j^{(b)}-\mu\left(y_j\right)}{\sigma\left(y_j\right)}\right)+\beta
 
