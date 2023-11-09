@@ -675,7 +675,7 @@ $$
 
 ![](./2023-10-30-some-review-about-vision/截屏2023-11-01 16.05.56.png)
 
-**激活函数**
+**三、激活函数**
 
 **sigmoid激活函数**
 
@@ -846,17 +846,87 @@ $$
 ![](./2023-10-30-some-review-about-vision/截屏2023-11-02 14.39.10.png)
 
 GeLU激活函数及其导数图像（和Swish非常像。。）
-$$
 
+
+
+**四、Normalization**
+
+Normalization是深度神经网络中的标配，目前涌现出来各式各样的Normalization，比如Batch Norm，Layer Norm，Group Norm等，其目的是为了把输入数据转化成均值为0、方差为1的数据。Normalization一般是在把数据送入激活函数之前进行的，目的是希望输入数据不要落在激活函数的饱和区。用好了Norm，基本上可以提升训练效率，使得神经网络更快，更好地收敛。
+
+先从下图中直观感受下各Norm。
+
+假设某个卷积层的特征图为
+$$
+(N, C, H, W)
+$$
+分别代表单个批次中样本的索引，样本特征图通道的索引，特征图的高，特征图的宽，用
+$$
+(N_i, C_j, H, W)
+$$
+代表单个批次中第i个样本的第j个特征图。
+
+在进行Norm操作时，对所有标记为蓝色的特征求和，计算均值和方差，然后采用计算出的均值、方差对所有标记为蓝色的特征进行标准化操作。
+
+![](./2023-10-30-some-review-about-vision/截屏2023-11-06 10.50.36.png)
+
+**Batch Norm**
+
+将当前批次**所有数据**的具有**相同通道索引**的特征图划分为一组，每组单独归一化，这样组集合就是
+$$
+(N, C_1, H, W)，(N, C_2, H, W)，……，(N, C_j, H, W)，……
+$$
+**Layer Norm**
+
+将当前批次**单个数据**的**所有通道**的特征图划分为一组，每组单独归一化，这样组集合就是
+$$
+(N_1, C, H, W)，(N_2, C, H, W)，……，(N_i, C, H, W)，……
+$$
+**Instance Norm**
+
+将当前批次**单个数据**的**单个通道**划分为一组，也就是每个特征图自己归一化，这样组集合就是
+$$
+(N_1, C_1, H, W)，(N_2, C_1, H, W)，……，(N_i, C_1, H, W)
+$$
+**Group Norm**
+
+将当前批次**单个数据**的**所有通道**划分为G组，每组单独归一化，假设每组被划分后有p个通道，这样组集合就是
+$$
+\{(N_1, C_1, H, W)，(N_1, C_2, H, W)，……，(N_i, C_p, H, W)\},\\
+\{(N_1, C_{p+1}, H, W)，(N_1, C_{p+2}, H, W)，……，(N_i, C_{p+p}, H, W)\},……,\\
+\{(N_i, C_1, H, W)，(N_i, C_2, H, W)，……，(N_i, C_p, H, W)\},\\
+\{(N_1, C_{p+1}, H, W)，(N_1, C_{p+2}, H, W)，……，(N_i, C_{p+p}, H, W)\},……
+$$
+当然，为了弥补损失掉的表达能力，上述所有的Norm方法都必须学习一个线性变换：
+$$
+y_i = \gamma\tilde{x}_i + \beta, \\
+其中\gamma和\beta是可训练的缩放与偏移量。
+$$
+**Dive into Batch Norm**
+
+原作者在[《Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift》](https://link.zhihu.com/?target=https%3A//arxiv.org/abs/1502.03167v3)提出了BN，并造成了两个结果：1.神经网络训练收敛更快。2.对learning rate的敏感度更低（也就是说lr的设置是否合理不会很大程度地影响最终结果）。
+
+![](./2023-10-30-some-review-about-vision/截屏2023-11-06 14.21.04.png)
+
+batch normalization在每层都加一个norm进行标准化，让每层的数据分布相同，变成均值0，方差1的标准分布。高斯分布的标准化公式就是下面式子中括号内的部分。
+$$
 B N\left(y_j\right)^{(b)}=\gamma \cdot\left(\frac{y_j^{(b)}-\mu\left(y_j\right)}{\sigma\left(y_j\right)}\right)+\beta
-
-\\
 $$
+值减去均值，再除以方差，能够得到均值为0，方差为1的标准正态分布。至于
+$$
+\gamma,\beta
+$$
+是两个需要学习的参数。其中
+$$
+\gamma对数据的方差进行缩放，\beta对数据的均值产生一个偏移。
+$$
+原论文中认为网络中每层都进行了一次同分布，缓解了ICS，是造成上述两个结果的主要原因。
 
+![](./2023-10-30-some-review-about-vision/截屏2023-11-06 14.30.43.png)
 
-**三、感知算法**
+MIT的研究人员提出了[《How Does Batch Normalization Help Optimization?》](https://link.zhihu.com/?target=https%3A//arxiv.org/pdf/1805.11604v3.pdf)，根据这一思路，将使用BN的网络随机添加高斯噪声，使得网络在添加了BN的同时又去除了BN所带来的同分布效果，但结果显示优势仍然存在，因此对原作者的解释进行了反驳。
 
+![](./2023-10-30-some-review-about-vision/截屏2023-11-06 14.33.08.png)
 
+随后MIT研究人员使用了loss的一阶信息和二阶信息进行了评估，发现使用了BN以后的loss在一阶和二阶上都具有很好的性质，由此推断BN之所以能产生效果，不是原作者提出的解释，而是因为BN将loss surface变成了一个一阶、二阶均平滑的曲面（如下图右侧所示），使得神经网络训练的收敛速度加快，并对learning rate的敏感度更低。
 
-**四、工程实践**
-
+![](./2023-10-30-some-review-about-vision/截屏2023-11-06 14.37.12.png)
