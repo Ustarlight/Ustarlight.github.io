@@ -1,0 +1,1312 @@
+---
+layout: post
+title:  "2023-11-17-leetcode"
+date:   2023-11-17 10:45:45 +0800
+categories: share
+---
+
+**leetcode一些题目**
+
+一、[两数之和](https://leetcode.cn/problems/two-sum/)
+
+考察：数组，哈希表，字符串
+
+c++：用到vector，map；
+
+```c++
+#include <iostream>
+#include <vector>
+#include <map>
+
+using namespace std;
+
+class Solution{
+public:
+    vector<int> twoSum(vector<int>& nums, int target){
+        vector<int> targetnum(2); //存放结果
+        map<int, int> temp_map; //建立哈希表，存放数组元素
+        for(int i = 0; i < nums.size(); i++){
+            temp_map[nums[i]] = i;
+        }
+        for(int i = 0; i < nums.size(); i++){
+            int complement = target - nums[i];
+            if(temp_map.count(complement) && temp_map[complement] != i){
+              	// 判断是否找到目标元素且目标元素不能是本身
+                targetnum[0] = i;
+                targetnum[1] = temp_map[complement];
+                break; // 很重要
+            }
+        }
+        return targetnum;
+    }
+};
+
+
+int main(){
+    vector<int> arr = {2, 7, 11, 15};
+    int val = 9;
+    Solution test;
+    cout << "hehe: [" <<test.twoSum(arr, val)[0] << "," << test.twoSum(arr, val)[1] << "]" << endl;
+    return 0;
+};
+```
+
+使用哈希表法：
+
+已知目标和的值，从第一位数开始，找有没有能与之和为目标值的数。
+
+假设目标值是target，当前数为nums[i]，那么要找到complement = target - nums[i]。
+
+```python
+class Solution:
+    def twoSum(self, nums: List[int], target: int) -> List[int]:
+        idx = {} #创建一个空哈希表（字典）
+        for j, x in enumerate(nums): # x=nums[j]
+            if target - x in idx:
+                return [idx[target - x], j] #返回两个数的下标
+            idx[x] = j # 保存 nums[j] 和 j
+```
+
+二、[ 字母异位词分组](https://leetcode.cn/problems/group-anagrams/)
+
+考察：数组，哈希表，字符串
+
+c++：
+
+std::vector::emplace_back() 是 C++11 中引入的一个成员函数，用于在向量的末尾直接构造一个新元素，而无需显式创建临时对象。
+
+与 push_back() 函数不同，emplace_back() 接受的参数是用于构造新元素的实参列表，而不是一个已经构造的对象。它使用这些参数在向量的末尾就地构造一个新的元素。
+
+emplace_back() 函数的优势在于避免了构造临时对象和复制/移动操作的开销，因为它直接在向量内存中构造元素。这对于构造成本较高的对象类型尤其有用。
+
+思路：
+
+哈希表的key是一组字母异位词共同拥有的字母，哈希表的value是这组字母异位词，对应两个要点：
+
+​	每个单词的字母顺序不同， 不能直接与key比较。取出一个单词后，首先需要另存一份，sort后与哈希表key值比较；
+
+​	value是一个数组，key值相同后，把单词插入至value。
+
+```C++
+class Solution {
+public:
+    vector<vector<string>> groupAnagrams(vector<string>& strs) {
+        unordered_map<string, vector<string>> mp;
+        for(string& str: strs){
+            string key = str;
+            sort(key.begin(), key.end()); //保证了不同顺序、相同字符的key值都一样
+            mp[key].emplace_back(str); //value为一个向量时，向value中插入值
+        }
+        vector<vector<string>> ans;
+        for(auto it = mp.begin(); it != mp.end(); ++it){
+            ans.emplace_back(it->second);
+        }
+        return ans;
+    }
+};
+```
+
+三、[跳跃游戏II](https://leetcode.cn/problems/jump-game-ii/)
+
+```c++
+class Solution {
+public:
+    int jump(vector<int> &nums){
+        int ans = 0;
+        int start = 0;
+        int end = 1;
+        while (end < nums.size())
+        {
+            int maxPos = 0;
+            for (int i = start; i < end; i++)
+            {
+                // 能跳到最远的距离
+                maxPos = max(maxPos, i + nums[i]);
+            }
+            start = end;      // 下一次起跳点范围开始的格子
+            end = maxPos + 1; // 下一次起跳点范围结束的格子
+            ans++;            // 跳跃次数
+        }
+        return ans;
+    }
+};
+```
+
+四、[最长连续序列](https://leetcode.cn/problems/longest-consecutive-sequence/)
+
+```c++
+class Solution {
+public:
+    int longestConsecutive(vector<int>& nums) {
+        int res = 0;    // 记录最长连续序列的长度
+        unordered_set<int> num_set(nums.begin(), nums.end());   // 记录nums中的所有数值
+        int seqLen;
+        for(int num: num_set){
+            // 如果当前的数是一个连续序列的起点，统计这个连续序列的长度
+            if(!num_set.count(num - 1)){
+                seqLen = 1;     // 将连续序列的长度初始化为1
+                // 不断查找连续序列，直到num的下一个数不存在于数组中
+                while(num_set.count(++num))seqLen++;    
+                res = max(res, seqLen);     // 更新最长连续序列长度
+            }
+        }
+        return res;
+    }
+};
+
+```
+
+对于数组中存在的连续序列，为了统计每个连续序列的长度，我们希望直接定位到每个连续序列的起点，从起点开始遍历每个连续序列，从而获得长度。
+
+那么如何获取到每个连续序列的起点呢，或者说什么样的数才是一个连续序列的起点？ 答案是这个数的前一个数不存在于数组中，因为我们需要能够快速判断当前数num的前一个数num - 1是否存在于数组中。
+
+同时当我们定位到起点后，我们就要遍历这个连续序列，什么时候是终点呢？ 答案是当前数num的后一个数nunm + 1不存在于数组中，因此我们需要能够快速判断当前数num的后一个数num + 1是否存在于数组中。
+
+为了实现上述需求，我们使用哈希表来记录数组中的所有数，以实现对数值的快速查找。
+https://leetcode.cn/problems/longest-consecutive-sequence/solutions/2362995/javapython3cha-xi-biao-ding-wei-mei-ge-l-xk4c/
+
+五、[盛最多水的容器](https://leetcode.cn/problems/container-with-most-water/)
+
+```C++
+class Solution {
+public:
+    int maxArea(vector<int>& height) {
+        int l = 0;
+        int r = height.size() - 1;
+        int ans = 0; //记录最终面积结果
+        while(l < r){
+            int area = min(height[l], height[r]) * (r - l);
+            ans = max(ans, area);
+            if(height[l] < height[r]){
+                ++l;
+            }else{
+                --r;
+            }
+        }
+        return ans;
+    }
+};
+```
+
+为什么双指针的做法是正确的？
+
+双指针代表了什么？
+
+双指针代表的是 可以作为容器边界的所有位置的范围。在一开始，双指针指向数组的左右边界，表示 数组中所有的位置都可以作为容器的边界，因为我们还没有进行过任何尝试。在这之后，我们每次将 对应的数字较小的那个指针 往 另一个指针 的方向移动一个位置，就表示我们认为 这个指针不可能再作为容器的边界了。
+
+https://leetcode.cn/problems/container-with-most-water/solutions/207215/sheng-zui-duo-shui-de-rong-qi-by-leetcode-solution/
+六、[ 三数之和](https://leetcode.cn/problems/3sum/)
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> threeSum(vector<int> &nums) {
+        sort(nums.begin(), nums.end());
+        vector<vector<int>> ans;
+        int n = nums.size();
+        for (int i = 0; i < n - 2; ++i) {
+            int x = nums[i];
+            if (i && x == nums[i - 1]) continue; // 跳过重复数字
+            if (x + nums[i + 1] + nums[i + 2] > 0) break; // 优化一
+            if (x + nums[n - 2] + nums[n - 1] < 0) continue; // 优化二
+            int j = i + 1, k = n - 1;
+            while (j < k) {
+                int s = x + nums[j] + nums[k];
+                if (s > 0) --k;
+                else if (s < 0) ++j;
+                else {
+                    ans.push_back({x, nums[j], nums[k]});
+                    for (++j; j < k && nums[j] == nums[j - 1]; ++j); // 跳过重复数字
+                    for (--k; k > j && nums[k] == nums[k + 1]; --k); // 跳过重复数字
+                }
+            }
+        }
+        return ans;
+    }
+};
+
+```
+
+时间复杂度：O(n2)
+
+时间复杂度：O(1)
+
+https://leetcode.cn/problems/3sum/solutions/1968332/shuang-zhi-zhen-xiang-bu-ming-bai-yi-ge-pno55/
+七、[无重复字符的最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)
+
+```c++
+class Solution {
+public:
+    int lengthOfLongestSubstring(string s) {
+        int result = 0, length = s.length();
+        int start = 0, end = 0;
+        while(end < length){
+            // 发现有重复字符时，可以直接把左指针移动到重复字符的下一个位置
+            for(int i = start; i < end; i++){
+                if(s[i] == s[end]){
+                    start = i + 1;
+                    break;
+                }
+            }
+            result = max(result, end - start + 1);
+            end++;
+        }
+        return result;
+    }
+};
+```
+
+什么是滑动窗口？
+
+其实就是一个队列,比如例题中的 abcabcbb，进入这个队列（窗口）为 abc 满足题目要求，当再进入 a，队列变成了 abca，这时候不满足要求。所以，我们要移动这个队列！
+
+如何移动？
+
+我们只要把队列的左边的元素移出就行了，直到满足题目要求！
+
+一直维持这样的队列，找出队列出现最长的长度时候，求出解！
+
+时间复杂度：O(n)
+
+https://leetcode.cn/problems/longest-substring-without-repeating-characters/solutions/3982/hua-dong-chuang-kou-by-powcai/
+
+
+八、[找到字符串中所有字母异位词](https://leetcode.cn/problems/find-all-anagrams-in-a-string/)
+
+```C++
+class Solution {
+public:
+    vector<int> findAnagrams(string s, string t) {
+        unordered_map<char, int> need, window;
+        for (char c : t) need[c]++;
+
+        int left = 0, right = 0;
+        int valid = 0;
+        vector<int> res; // 记录结果
+        while (right < s.size()) {
+            char c = s[right];
+            right++;
+            // 进行窗口内数据的一系列更新
+            if (need.count(c)) {
+                window[c]++;
+                if (window[c] == need[c]) 
+                    valid++;
+            }
+            // 判断左侧窗口是否要收缩
+            while (right - left >= t.size()) {
+                // 当窗口符合条件时，把起始索引加入 res
+                if (valid == need.size())
+                    res.push_back(left);
+                char d = s[left];
+                left++;
+                // 进行窗口内数据的一系列更新
+                if (need.count(d)) {
+                    if (window[d] == need[d])
+                        valid--;
+                    window[d]--;
+                }
+            }
+        }
+    return res;
+    }
+};
+```
+
+https://leetcode.cn/problems/find-all-anagrams-in-a-string/solutions/9749/hua-dong-chuang-kou-tong-yong-si-xiang-jie-jue-zi-/
+
+该链接的总结得好好review下。
+
+9、[和为 K 的子数组](https://leetcode.cn/problems/subarray-sum-equals-k/)
+
+```c++
+class Solution {
+public:
+    int subarraySum(vector<int>& nums, int k) {
+        int result = 0, preSumRight = 0;
+        unordered_map<int, int> hashMap;
+        // 为什么要有此初始化？
+        // 主要是当数组只有一个元素时，历史前缀和数据(也就是hash表)是空的，因为还未来得及构建
+        // 当数组中这个元素正好等于k时，需要hash表中保存的历史前缀和数据有一个key=0的数据
+        // 如果数组中这个元素不等于k时，是不影响结果的
+        hashMap[0] = 1;
+        for (int i = 0; i < nums.size(); ++i) {
+            // 算一下当前前缀和
+            preSumRight += nums[i];
+
+            // 下面是前缀和的理解核心：
+            // 假设有一个区间[left, right], 该区间上元素和为k
+            // 那么就有:
+            // ([0,right]元素之和)  减去  ([0,left] 元素之和) 等于 (k)
+            // 转换一下就是:
+            // ([0,right]元素之和)  减去  (k)  等于  ([0,left] 元素之和)
+
+            // ([0,right]元素之和) 就是
+            //      每次循环时立刻就能算出来的当前前缀和，姑且叫为 preSumRight
+            // ([0,left] 元素之和) 就是
+            //      存在hash表里面的历史前缀和数据, 
+            //      key是历史前缀和数据姑且叫为 preSumLeft, value是出现的次数
+            // 可以得到：
+            int preSumLeft = preSumRight - k;
+          	// 先判断一下，历史前缀和数据也就是preSumLeft已经存在于无序map hashMap中时，将当前前缀和preSumRight再存进去
+          	// 此时哈希表中有了一组完整的"preSumRight - preSumLeft == k"出现，那么我们可以说出现一个和为k的字数组了
+            // 那就更新下result，将该结果加1（hashMap.count(preSumLeft) == 1）。
+            if (hashMap.count(preSumLeft) == 1) {
+                result += hashMap[preSumLeft];
+            }
+
+            // 将当前前缀和存储hash表
+            hashMap[preSumRight]++;
+        }
+        return result;
+    }
+};
+
+```
+
+10、[最大子数组和](https://leetcode.cn/problems/maximum-subarray/)
+
+动态规划是本题的最优解法。
+
+**动态规划解析**：
+
+​	**状态定义**：设动态规划列表为dp，dp[i] 代表以元素 nums[i]为结尾的连续子数组最大和。
+
+​		为何要定义最大和dp[i]中必须包含元素nums[i]呢？为了保证dp[i]递推到dp[i+1]的正确性。如果不包含元素nums[i]，递推时则不满足题目要求的**连续子数组**。
+
+​	**转移方程**：dp[i-1]  < 0，说明dp[i-1]对dp[i]产生负贡献，即dp[i-1] +  nums[i]还不如nums[i]本身大。
+$$
+当dp[i-1] > 0：dp[i] = dp[i-1] +  nums[i];\space\space
+当dp[i-1] <= 0：dp[i] = nums[i]
+$$
+​	**初始状态**：dp[0] = nums[0]，即以nums[0]结尾的连续子数组最大和为nums[0]。
+
+​	**返回值**：返回dp列表中的最大值，代表全局最大值。
+
+​	**状态压缩**：由于dp[i]只与dp[i-1]和nums[i]有关系，因此可以将原数组nums用作dp列表，即直接在nums上修改即可。由于省去dp列表使用的额外空间，因此空间复杂度从O(N)降至O(1)。
+
+```C++
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        int res = nums[0];
+        for(int i = 1; i < nums.size(); ++i){
+            if(nums[i - 1] > 0) nums[i] += nums[i - 1];
+            if(nums[i] > res) res = nums[i];
+        }
+        return res;
+    }
+};
+```
+
+11、[合并区间](https://leetcode.cn/problems/merge-intervals/)
+
+使用排序+双指针
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> merge(vector<vector<int>>& intervals) {
+        sort(intervals.begin(), intervals.end());
+        vector<vector<int>> ans;
+        for (int i = 0; i < intervals.size();) {
+            int t = intervals[i][1];
+            int j = i + 1;
+            while (j < intervals.size() && intervals[j][0] <= t) {
+                t = max(t, intervals[j][1]);
+                j++;
+            }
+            ans.push_back({ intervals[i][0], t });
+            i = j;
+        }
+        return ans;
+    }
+};
+```
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> merge(vector<vector<int>>& intervals) {
+        sort(intervals.begin(), intervals.end());
+        vector<vector<int>> ans;
+        ans.emplace_back(intervals[0]);
+        for (int i = 1; i < intervals.size(); ++i) {
+            if (ans.back()[1] < intervals[i][0]) {
+                ans.emplace_back(intervals[i]);
+            } else {
+                ans.back()[1] = max(ans.back()[1], intervals[i][1]);
+            }
+        }
+        return ans;
+    }
+};
+
+```
+
+12、[轮转数组](https://leetcode.cn/problems/rotate-array/)
+
+将数组反转3次
+
+```c++
+class Solution {
+public:
+    void reverse(vector<int>& nums, int start, int end){
+        while(start < end){
+            swap(nums[start], nums[end]);
+            start += 1;
+            end -= 1;
+        }
+    }
+
+    void rotate(vector<int>& nums, int k) {
+        k %= nums.size();
+        reverse(nums, 0, nums.size() - 1);
+        reverse(nums, 0, k - 1);
+        reverse(nums, k, nums.size() - 1);
+    }
+};
+```
+
+https://leetcode.cn/problems/rotate-array/solutions/551039/xuan-zhuan-shu-zu-by-leetcode-solution-nipk/
+
+该方法基于如下的事实：当我们将数组的元素向右移动 k  次后，尾部 k  mod  n 个元素会移动至数组头部，其余元素向后移动 k  mod  n个位置。
+
+该方法为数组的翻转：我们可以先将所有元素翻转，这样尾部的 k  mod  n个元素就被移至数组头部，然后我们再翻转区间[0, k mod n−1]的元素和[k mod n, n−1] 区间的元素即能得到最后的答案。
+
+13、[除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
+
+首先，我们可以想到，对于任何一个位置 i，它的值应该是它左边所有数的乘积乘以它右边所有数的乘积。因此，可以使用两次循环来分别计算左边所有数的乘积和右边所有数的乘积。
+
+用一个数组 left 来表示从左边开始到位置 i 的所有数的乘积。 用一个数组 right 来表示从右边开始到位置 i 的所有数的乘积。 那么对于任何位置 i，它的答案就是 left[i] * right[i]。
+
+但为了满足O(1)的额外空间复杂度，我们可以不用额外的 left 和 right 数组，而是用结果数组 result 和一个变量来迭代地完成这个计算。
+
+https://leetcode.cn/problems/product-of-array-except-self/solutions/2498032/238-chu-zi-shen-yi-wai-shu-zu-de-cheng-j-dl0w/
+
+```C++
+
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        int len = nums.size();
+        vector<int> resLeft(len, 1);
+        vector<int> resRight(len, 1);
+        vector<int> res(len, 1);
+
+        // 计算每个位置左边所有数的乘积
+        for(int i = 1; i < len; ++i){
+            resLeft[i] = resLeft[i - 1] * nums[i - 1];
+        }
+
+        // 计算每个位置右边所有数的乘积
+        for(int i = len -2; i >= 0; --i){
+            resRight[i] = resRight[i + 1] * nums[i + 1];
+        }
+
+        // 左右两侧乘积相乘即可
+        for(int i = 0; i < len; i++) {
+            res[i] = resLeft[i] * resRight[i];
+        }
+
+        return res;
+    }
+};
+
+作者：simple_tiny
+链接：https://leetcode.cn/problems/product-of-array-except-self/solutions/2534361/238-chu-zi-shen-yi-wai-shu-zu-de-cheng-j-gckj/
+来源：力扣（LeetCode）
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+```
+
+14、[矩阵置零](https://leetcode.cn/problems/set-matrix-zeroes/)
+
+可以用矩阵的第一行和第一列作为两个标记数组，分别记录每一行和每一列是否有零出现，以达到 O(1)的额外空间。但这样会导致原数组的第一行和第一列被修改，无法记录它们是否原本包含 0。因此我们需要额外使用两个标记变量分别记录第一行和第一列是否原本包含 0。
+
+在实际代码中，我们首先预处理出两个标记变量，接着使用其他行与列去处理第一行与第一列，然后反过来使用第一行与第一列去更新其他行与列，最后使用两个标记变量更新第一行与第一列即可。
+
+```c++
+class Solution {
+public:
+    void setZeroes(vector<vector<int>>& matrix) {
+        int rows = matrix.size();  // 记录矩阵行数
+        int cols = matrix[0].size();  // 记录矩阵列数
+        // 使用两个标记变量分别记录第一行和第一列是否原本包含0，false表示不包含0
+        int flag_col0 = false, flag_row0 = false; 
+        // 按行遍历第一列，如果第一列中有元素为0，则将第一列对应位置的标记变量置为true。 
+        for (int i = 0; i < rows; i++) {
+            if (!matrix[i][0]) {
+                flag_col0 = true;
+            }
+        }
+
+        // 按列遍历第一行，如果第一行中有元素为0，则将第一行对应位置的标记变量置为true。 
+        for (int j = 0; j < cols; j++) {
+            if (!matrix[0][j]) {
+                flag_row0 = true;
+            }
+        }
+
+        /*
+        从第1行第1列开始（注意起始位置为0）遍历矩阵除第0行和第0列的各元素，当某个位置的元素为0时，
+        将该位置对应的第0行和第0列的标记变量置为0，
+        比如遍历发现matrix[1][1]为0，那么执行matrix[1][0] = matrix[0][1] = 0
+        */
+        for (int i = 1; i < rows; i++) {
+            for (int j = 1; j < cols; j++) {
+                if (!matrix[i][j]) {
+                    matrix[i][0] = matrix[0][j] = 0;
+                }
+            }
+        }
+        /*
+        再从第1行第1列开始（注意起始位置为0），注意这一次只遍历矩阵的第0行和第0列各元素
+        当遍历到0时，则基于该0元素的行和列，将对应的整个行和整个列的元素都置为0
+        */
+        for (int i = 1; i < rows; i++) {
+            for (int j = 1; j < cols; j++) {
+                if (!matrix[i][0] || !matrix[0][j]) {
+                    matrix[i][j] = 0;
+                }
+            }
+        }
+
+        // flag_col0为true，说明第一列包含0。那按行遍历第一列，将第一列都置零
+        if (flag_col0) {
+            for (int i = 0; i < rows; i++) {
+                matrix[i][0] = 0;
+            }
+        }
+
+        // flag_row0为true，说明第一行包含0。那按列遍历第一行，将第一行都置零
+        if (flag_row0) {
+            for (int j = 0; j < cols; j++) {
+                matrix[0][j] = 0;
+            }
+        }
+    }
+};
+```
+
+15、[螺旋矩阵](https://leetcode.cn/problems/spiral-matrix/)
+
+根据题目示例 matrix = [[1,2,3],[4,5,6],[7,8,9]] 的对应输出 [1,2,3,6,9,8,7,4,5] 可以发现，顺时针打印矩阵的顺序是 “从左向右、从上向下、从右向左、从下向上” 循环。
+
+因此，考虑设定矩阵的 “左、上、右、下” 四个边界，模拟以上矩阵遍历顺序。
+
+算法流程：
+
+1. 空值处理：当matrix为空时，直接返回空列表[]即可。
+
+2. 初始化：矩阵左右上下四个边界，用于打印结果的列表res。
+
+3. 循环打印：“从左向右、从上向下、从右向左、从下向上” 四个方向循环打印。
+
+   （1）根据边界打印，即将元素按顺序添加至列表res尾部
+
+   （2）边界向内收缩 1 （代表已被打印）
+
+   （3）判断边界是否相遇（是否打印完毕），若打印完毕则跳出
+
+4. 返回值：返回res即可。
+
+```c++
+class Solution {
+public:
+    vector<int> spiralOrder(vector<vector<int>>& matrix) {
+        if(matrix.empty()) return {};
+        int l = 0, r = matrix[0].size() - 1, t = 0, b = matrix.size() - 1;
+        vector<int> res;
+        /*
+        打印方向	1. 根据边界打印	    2. 边界向内收缩	  3. 是否打印完毕
+        从左向右	左边界l，右边界r	 上边界 t 加 1	   是否 t > b
+        从上向下	上边界t，下边界b	 右边界 r 减 1	   是否 l > r
+        从右向左	右边界r，左边界l	 下边界 b 减 1	   是否 t > b
+        从下向上	下边界b，上边界t	 左边界 l 加 1	   是否 l > r
+        */
+        while(true){
+            // left to right
+            for(int i = l; i <= r; i++) res.push_back(matrix[t][i]); 
+            if(++t > b) break;
+
+            // top to bottom
+            for(int i = t; i <= b; i++) res.push_back(matrix[i][r]); 
+            if(l > --r) break;
+
+            // right to left
+            for(int i = r; i >= l; i--) res.push_back(matrix[b][i]); 
+            if(t > --b) break;
+
+            //bottom to top
+            for(int i = b; i >= t; i--) res.push_back(matrix[i][l]);
+            if(++l > r) break;
+        }
+        return res;
+    }
+};
+
+
+
+```
+
+https://leetcode.cn/problems/spiral-matrix/solutions/2362055/54-luo-xuan-ju-zhen-mo-ni-qing-xi-tu-jie-juvi/
+16、[旋转图像](https://leetcode.cn/problems/rotate-image/)
+
+```C++
+class Solution {
+public:
+    void rotate(vector<vector<int>>& matrix) {
+        int n = matrix.size();
+        for (int i = 0; i < n / 2; i++) {
+            for (int j = 0; j < (n + 1) / 2; j++) {
+                int tmp = matrix[i][j];
+                matrix[i][j] = matrix[n - 1 - j][i];
+                matrix[n - 1 - j][i] = matrix[n - 1 - i][n - 1 - j];
+                matrix[n - 1 - i][n - 1 - j] = matrix[j][n - 1 - i];
+                matrix[j][n - 1 - i] = tmp;
+            }
+        }
+    }
+};
+
+作者：Krahets
+链接：https://leetcode.cn/problems/rotate-image/solutions/1228078/48-xuan-zhuan-tu-xiang-fu-zhu-ju-zhen-yu-jobi/
+来源：力扣（LeetCode）
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+```
+
+一轮可以完成矩阵 4 个元素的旋转。因而，只要分别以矩阵左上角 1/4 的各元素为起始点执行以上旋转操作，即可完整实现矩阵旋转。
+
+具体来看，当矩阵大小 n 为偶数时，取前n/2行、前n/2列的元素为起始点；当矩阵大小n为奇数时，取前n/2行，前(n+1)/2列的元素为起始点。
+
+令matrix[i] [j] = A, 根据文章开头的元素旋转公式，可推导得适用于任意起始点的元素旋转操作：暂存tmp = matrix[i] [j]
+
+matrix[i] [j]  <--  matrix[n - 1 - j] [i]  <--  matrix[n - 1 - i] [n - 1 - j]  <--  matrix[j] [n - 1 - i] 
+
+17、[搜索二维矩阵 II](https://leetcode.cn/problems/search-a-2d-matrix-ii/)
+
+（1）**直接查找**
+
+```c++
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        //直接按行遍历整个矩阵，时间复杂度O(mn)，空间复杂度O(1)
+        for(const auto& row: matrix){
+            for(int element: row){
+                if(element == target) return true;
+            }
+        }
+        return false;
+    }
+};
+```
+
+（2）**二分查找**
+
+由于矩阵中每一行的元素都是升序排列的，因此我们可以对每一行都使用一次二分查找，判断 target 是否在该行中，从而判断 target 是否有出现。
+
+（3）**贪心**
+
+我们将矩阵逆时针旋转 45° ，并将其转化为图形式，发现其类似于 二叉搜索树 ，即对于每个元素，其左分支元素更小、右分支元素更大。因此，通过从 “根节点” 开始搜索，遇到比 target 大的元素就向左，反之向右，即可找到目标值 target 。
+
+“根节点” 对应的是矩阵的 “左下角” 和 “右上角” 元素，本文称之为 标志数 ，以 matrix 中的 左下角元素 为标志数 flag ，则有:
+
+若 flag > target ，则 target 一定在 flag 所在 行的上方 ，即 flag 所在行可被消去。
+若 flag < target ，则 target 一定在 flag 所在 列的右方 ，即 flag 所在列可被消去。
+
+**算法流程**：
+从矩阵 matrix 左下角元素（索引设为 (i, j) ）开始遍历，并与目标值对比：
+当 matrix[i] [j] > target 时，执行 i-- ，即消去第 i 行元素。 当 matrix[i] [j] < target 时，执行 j++ ，即消去第 j 列元素。 当 matrix[i] [j] = target 时，返回 truetruetrue ，代表找到目标值。
+若行索引或列索引越界，则代表矩阵中无目标值，返回 falsefalsefalse 。
+每轮 i 或 j 移动后，相当于生成了“消去一行（列）的新矩阵”， 索引(i,j) 指向新矩阵的左下角元素（标志数），因此可重复使用以上性质消去行（列）。
+
+```c++
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        int i = matrix.size() - 1, j = 0;
+        while(i >= 0 && j < matrix[0].size())
+        {
+            if(matrix[i][j] > target) i--;
+            else if(matrix[i][j] < target) j++;
+            else return true;
+        }
+        return false;
+    }
+};
+```
+
+时间复杂度 O(M+N) ：其中，N 和 M 分别为矩阵行数和列数，此算法最多循环 M+N次。
+空间复杂度 O(1) :  i, j 指针使用常数大小额外空间。
+
+https://leetcode.cn/problems/search-a-2d-matrix-ii/solutions/2361487/240-sou-suo-er-wei-ju-zhen-iitan-xin-qin-7mtf/
+
+18、[环形链表 II](https://leetcode.cn/problems/linked-list-cycle-ii/)
+
+双指针法。在本题的求解过程中，双指针会产生两次“相遇”。
+
+**双指针的第一次相遇**：
+
+（1）设定`fast、slow`两指针，都指向链表头部head。
+
+（2）令 `fast` 每轮走 2 步，`slow` 每轮走 1 步。
+
+执行以上两步后，可能出现两种结果：
+
+（1）第一种结果，`fast` 指针走过链表末端，说明链表无环，此时直接返回 `null`（如果链表存在环，则双指针一定会相遇。因为每走 1 轮，`fast` 与 `slow` 的间距+1，`fast` 一定会追上 `slow` ）。
+
+（2）第二种结果，当`fast == slow`时， 两指针在环中第一次相遇。下面分析此时 `fast` 与 `slow` 走过的步数关系：
+
+设链表共有 a+b 个节点，其中 链表头部到链表入口 有 a 个节点（不计链表入口节点）， 链表环 有 b 个节点（这里需要注意，a 和 b 是未知数）；设两指针分别走了 f，s 步，则有：
+
+fast 走的步数是 slow 步数的 2 倍，即 f=2s；（解析： fast 每轮走 2 步）
+fast 比 slow 多走了 n 个环的长度，即 f=s+nb；（ 解析： 两个指针都走过 了a 步，然后在环内绕圈直到重合，重合时 fast 比 slow 多走了环的长度的整数倍 ）。
+
+可以推出：s = nb，则f = 2nb。即 `fast` 和 `slow` 指针分别走了 2n和n 个环的周长(b)。
+
+接下来该怎么做呢？
+
+如果让指针从链表头部一直向前走并统计步数k，那么所有 走到链表环入口节点时的步数 是：k=a+nb ，即先走 a步到入口节点，之后每绕 1 圈环（ b 步）都会再次到入口节点。而目前 slow 指针走了 nb 步。因此，我们只要想办法让 slow 再走 a 步停下来，就可以到环的入口。
+
+但是我们不知道 a 的值，该怎么办？依然是使用双指针法。考虑构建一个指针，此指针需要有以下性质：此指针和 slow 一起向前走 a 步后，两者在入口节点重合。那么从哪里走到环入口节点需要 a步？答案是链表头节点head。
+
+**双指针的第二次相遇**：
+
+​	令 fast 重新指向链表头部节点。此时 f=0，s=nb 。
+​	slow 和 fast 同时每轮向前走 1 步。
+​	当 fast 指针走到 f=a步时，slow 指针走到 s=a+nb 步。此时两指针重合，并同时指向链表环入口，返回 slow 指向的节点即可。
+
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        ListNode* fast = head;
+        ListNode* slow = head;
+        while(true){
+            if(fast == nullptr || fast->next == nullptr) return nullptr;
+            fast = fast->next->next; // fast每次走两步
+            slow = slow->next;
+            if(fast == slow) break; // 两指针第一次相遇时，终止while循环。
+        }
+        // 重新将fast指针置于head处。
+        fast = head;
+        while(slow != fast){
+            fast = fast->next;
+            slow = slow->next;
+        }
+        //while循环结束，意味着slow == fast（两指针第二次相遇了）
+        return fast;
+    }
+};
+```
+
+时间复杂度：O(n)
+
+空间复杂度：O(1)
+
+19、[ 两数相加](https://leetcode.cn/problems/add-two-numbers/)
+
+**递归**：每次把两个节点值l1.val， l2.val与进位值 carry 相加，除以 10得到的余数即为当前节点需要保存的数位，除以 10的商即为新的进位值。
+
+tips：代码实现时，有一个简化代码的小技巧：如果递归中发现 l2的长度比l1更长，那么可以交换l1和l2，保证l1不是空节点，从而简化代码逻辑。
+
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2, int carry = 0) {
+        // l1 和 l2 为当前遍历的节点，carry 为进位
+        // 递归边界：l1 和 l2 都是空节点
+        if(l1 == nullptr && l2 == nullptr){
+            // 如果进位了，就额外创建一个节点
+            return carry ? new ListNode(carry) : nullptr;
+        }
+        // 如果 l1 是空的，那么此时 l2 一定不是空节点
+        // 交换 l1 与 l2，保证 l1 非空，从而简化代码
+        if(l1 == nullptr) swap(l1, l2);
+        // 节点值和进位加在一起
+        carry += l1->val + (l2 ? l2->val : 0);
+        l1->val = carry % 10; // 每个节点保存一个数位
+        l1 -> next = addTwoNumbers(l1->next, (l2 ? l2->next : nullptr), carry / 10); //进位
+        return l1;
+    }
+};
+```
+
+时空复杂度都是O(n)。
+
+**迭代**：
+
+首先请看如何遍历一个链表，代码框架如下：
+
+```c++
+// 遍历链表 l1
+while (l1) { // 从链表头节点开始向后遍历，直到遇到空节点
+    cout << l1->val << endl; // 当前节点值
+    l1 = l1->next; // 准备遍历下一个节点
+}
+```
+
+迭代的思路是，初始化答案为一个「空链表」，每次循环，向该链表末尾添加一个节点（保存一个数位）。
+
+循环即遍历链表l1和l2，每次把两个节点值l1.val， l2.val与进位值carry相加，除以 10得到的余数即为当前节点需要保存的数位，除以 10的商即为新的进位值。
+
+需要注意的是，在第一次循环时，我们无法往一个空节点的末尾添加节点。这里的技巧是，创建一个哨兵节点（dummy node），当成初始的「空链表」。循环结束后，哨兵节点的下一个节点就是最终要返回的链表头节点。
+
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        auto dummy = new ListNode(); //哨兵节点
+        auto cur = dummy;
+        int carry = 0; //进位
+        //while条件：有一个不是空节点，或者还有进位，就继续迭代
+        while(l1 || l2 || carry){
+            //节点值val和进位carry加在一起
+            carry += (l1 ? l1->val : 0) + (l2 ? l2->val : 0);
+            //每个节点保存一个数位
+            cur = cur->next = new ListNode(carry % 10);
+            carry /= 10; //新的进位
+            if(l1) l1 = l1->next;
+            if(l2) l2 = l2->next;
+        }
+        return dummy->next; //哨兵节点dummy的下一个节点就是头节点
+    }
+};
+```
+
+时间复杂度：O(n)，需遍历链表。
+
+空间复杂度：O(1)，原地遍历，返回值不计入。
+20、[删除链表的倒数第 N 个结点](https://leetcode.cn/problems/remove-nth-node-from-end-of-list/)
+
+双指针。
+
+由于我们需要找到倒数第 n 个节点，因此我们可以使用两个指针 first 和 second 同时对链表进行遍历，并且 first 比 second 超前 n 个节点。当 first 遍历到链表的末尾时，second就恰好处于倒数第 n 个节点。
+
+具体地，first和second均指向头节点，我们首先使用first对链表进行遍历，遍历n步，此时first和second之间隔了n - 1个节点，即first比second超前了n个节点。
+
+在这之后，我们同时使用first和second对链表进行遍历。当first遍历到链表的末尾（即first为空指针）时，second恰好指向倒数第n个节点。
+
+如果我们能够得到的是倒数第 n个节点的前驱节点而不是倒数第 n个节点的话，删除操作会更加方便。因此我们可以考虑在初始时将 second 指向一个哑节点dummy，其余的操作步骤不变。这样一来，当 first 遍历到链表的末尾时，second的**下一个节点**就是我们需要删除的节点。
+
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        ListNode* dummy = new ListNode(0, head);
+        ListNode* first = head;
+        ListNode* second = dummy;
+        for(int i = 0; i < n; ++i){
+            first = first -> next;
+        }
+        while(first){
+            first = first -> next;
+            second = second -> next;
+        }
+        second -> next = second -> next -> next;
+        ListNode* ans = dummy -> next;
+        delete dummy;
+        return ans;
+    }
+};
+```
+
+21、[两两交换链表中的节点](https://leetcode.cn/problems/swap-nodes-in-pairs/)
+
+**迭代**：
+
+![](./2023-11-17-leecode/1.png)
+
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* swapPairs(ListNode* head) {
+        auto dummy = new ListNode(0, head);
+        auto node0 = dummy;
+        auto node1 = head;
+        while(node1 && node1->next){
+            auto node2 = node1->next;
+            auto node3 = node2->next;
+
+            node0->next = node2; // 0->2
+            node2->next = node1; // 2->1
+            node1->next = node3; // 1->3
+
+            // 下一轮交换，0 是 1, 1是 3
+            node0 = node1; 
+            node1 = node3;
+        }
+        return dummy->next; // 返回新链表的头节点
+    }
+};
+```
+
+**递归**：
+
+```c++
+class Solution {
+public:
+    ListNode *swapPairs(ListNode *head) {
+        if (head == nullptr || head->next == nullptr)
+            return head;
+
+        auto node1 = head;
+        auto node2 = head->next;
+        auto node3 = node2->next;
+
+        node1->next = swapPairs(node3); // 1 指向递归返回的链表头
+        node2->next = node1; // 2 指向 1
+
+        return node2; // 返回交换后的链表头节点
+    }
+};
+
+```
+
+22、[随机链表的复制](https://leetcode.cn/problems/copy-list-with-random-pointer/)
+
+给定链表的头节点 head ，复制普通链表很简单，只需遍历链表，每轮建立新节点 + 构建前驱节点 pre 和当前节点 node 的引用指向即可。
+
+本题链表的节点新增了 random 指针，指向链表中的 任意节点 或者 nullnullnull 。这个 random 指针意味着在复制过程中，除了构建前驱节点和当前节点的引用指向 pre.next ，还要构建前驱节点和其随机节点的引用指向 pre.random 。
+
+**本题难点： 在复制链表的过程中构建新链表各节点的 random 引用指向。**
+
+**哈希表**：
+
+利用哈希表的查询特点，考虑构建 **原链表节点** 和 **新链表对应节点** 的键值对映射关系，再遍历构建新链表各节点的 `next` 和 `random` 引用指向即可。
+
+```c++
+/*
+// Definition for a Node.
+class Node {
+public:
+    int val;
+    Node* next;
+    Node* random;
+    
+    Node(int _val) {
+        val = _val;
+        next = NULL;
+        random = NULL;
+    }
+};
+*/
+
+class Solution {
+public:
+    Node* copyRandomList(Node* head) {
+        if(head == nullptr) return nullptr;
+        Node* cur = head;
+        unordered_map<Node*, Node*> map;
+        // 3. 复制各节点，并建立 “原节点 -> 新节点” 的 Map 映射
+        while(cur != nullptr){
+            map[cur] = new Node(cur->val);
+            cur = cur->next;
+        }
+        cur = head;
+        // 4. 构建新链表的 next 和 random 指向
+        while(cur != nullptr){
+            map[cur]->next = map[cur->next];
+            map[cur]->random = map[cur->random];
+            cur = cur->next;
+        }
+        // 5. 返回新链表的头节点
+        return map[head];
+    }
+};
+```
+
+时空复杂度都是O(N)
+
+**拼接 + 拆分**：考虑构建 原节点 1 -> 新节点 1 -> 原节点 2 -> 新节点 2 -> …… 的拼接链表，如此便可在访问原节点的 random 指向节点的同时找到新对应新节点的 random 指向节点。
+
+（1）复制各节点，构建拼接链表；
+
+（2）构建新链表各个节点的random指向：当访问原节点 `cur` 的随机指向节点 `cur.random` 时，对应新节点 `cur.next` 的随机指向节点为 `cur.random.next` ；
+
+（3）拆分原/新链表：设置 pre / cur 分别指向原 / 新链表头节点，遍历执行 pre.next = pre.next.next 和 cur.next = cur.next.next 将两链表拆分开。
+
+（4）返回新链表的头节点 `res` 即可。
+
+```c++
+class Solution {
+public:
+    Node* copyRandomList(Node* head) {
+        if(head == nullptr) return nullptr;
+        Node* cur = head;
+        // 1. 复制各节点，并构建拼接链表
+        while(cur != nullptr) {
+            Node* tmp = new Node(cur->val);
+            tmp->next = cur->next;
+            cur->next = tmp;
+            cur = tmp->next;
+        }
+        // 2. 构建各新节点的 random 指向
+        cur = head;
+        while(cur != nullptr) {
+            if(cur->random != nullptr)
+                cur->next->random = cur->random->next;
+            cur = cur->next->next;
+        }
+        // 3. 拆分两链表
+        cur = head->next;
+        Node* pre = head, *res = head->next;
+        while(cur->next != nullptr) {
+            pre->next = pre->next->next;
+            cur->next = cur->next->next;
+            pre = pre->next;
+            cur = cur->next;
+        }
+        pre->next = nullptr; // 单独处理原链表尾节点
+        return res;      // 返回新链表头节点
+    }
+};
+```
+
+时间复杂度：O(N)。三轮遍历链表，使用 O(N)时间。
+
+空间复杂度：O(1)。节点引用变量使用常数大小的额外空间。
+
+23、[排序链表](https://leetcode.cn/problems/sort-list/)
+
+归并排序。
+
+由于题目要求空间复杂度是 O(1)，因此不能使用递归。因此这里使用 bottom-to-up 的算法来解决。
+
+bottom-to-up 的归并思路是这样的：先两个两个的 merge，完成一趟后，再 4 个4个的 merge，直到结束。举个简单的例子：[4,3,1,7,8,9,2,11,5,6].
+
+step=1: (3->4)->(1->7)->(8->9)->(2->11)->(5->6)
+step=2: (1->3->4->7)->(2->8->9->11)->(5->6)
+step=4: (1->2->3->4->7->8->9->11)->5->6
+step=8: (1->2->3->4->5->6->7->8->9->11)
+链表里操作最难掌握的应该就是各种断链啊，然后再挂接啊。在这里，我们主要用到链表操作的两个技术：
+
+merge(l1, l2)，双路归并，我相信这个操作大家已经非常熟练的，就不做介绍了。
+cut(l, n)，可能有些同学没有听说过，它其实就是一种 split 操作，即断链操作。不过我感觉使用 cut 更准确一些，它表示，将链表 l 切掉前 n 个节点，并返回后半部分的链表头。
+额外再补充一个 dummyHead 大法，已经讲过无数次了，仔细体会吧。
+
+```c++
+class Solution {
+public:
+    ListNode* sortList(ListNode* head) {
+        ListNode dummyHead(0);
+        dummyHead.next = head;
+        auto p = head;
+        int length = 0;
+        while (p) {
+            ++length;
+            p = p->next;
+        }
+        
+        for (int size = 1; size < length; size <<= 1) {
+            auto cur = dummyHead.next;
+            auto tail = &dummyHead;
+            
+            while (cur) {
+                auto left = cur;
+                auto right = cut(left, size); // left->@->@ right->@->@->@...
+                cur = cut(right, size); // left->@->@ right->@->@  cur->@->...
+                
+                tail->next = merge(left, right);
+                while (tail->next) {
+                    tail = tail->next;
+                }
+            }
+        }
+        return dummyHead.next;
+    }
+    
+    ListNode* cut(ListNode* head, int n) {
+        auto p = head;
+        while (--n && p) {
+            p = p->next;
+        }
+        
+        if (!p) return nullptr;
+        
+        auto next = p->next;
+        p->next = nullptr;
+        return next;
+    }
+    
+    ListNode* merge(ListNode* l1, ListNode* l2) {
+        ListNode dummyHead(0);
+        auto p = &dummyHead;
+        while (l1 && l2) {
+            if (l1->val < l2->val) {
+                p->next = l1;
+                p = l1;
+                l1 = l1->next;       
+            } else {
+                p->next = l2;
+                p = l2;
+                l2 = l2->next;
+            }
+        }
+        p->next = l1 ? l1 : l2;
+        return dummyHead.next;
+    }
+};
+
+```
+
+24、[LRU 缓存](https://leetcode.cn/problems/lru-cache/)
+
+![](./2023-11-17-leecode/2.png)
+
+答疑：
+
+问：需要几个哨兵节点？
+
+答：一个就够了。一开始哨兵节点 dummy的 prev和 next 都指向 dummy。随着节点的插入，dummy 的 next 指向链表的第一个节点（最上面的书），prev 指向链表的最后一个节点（最下面的书）。
+
+问：为什么节点要把 key也存下来？
+
+答：在删除链表末尾节点时，也要删除哈希表中的记录，这需要知道末尾节点的 key。
+
+```c++
+class Node {
+public:
+    int key, value;
+    Node *prev, *next;
+
+    Node(int k = 0, int v = 0) : key(k), value(v) {}
+};
+
+class LRUCache {
+private:
+    int capacity;
+    Node *dummy; // 哨兵节点
+    unordered_map<int, Node*> key_to_node;
+
+    // 删除一个节点（抽出一本书）
+    void remove(Node *x) {
+        x->prev->next = x->next;
+        x->next->prev = x->prev;
+    }
+
+    // 在链表头添加一个节点（把一本书放在最上面）
+    void push_front(Node *x) {
+        x->prev = dummy;
+        x->next = dummy->next;
+        x->prev->next = x;
+        x->next->prev = x;
+    }
+
+    Node *get_node(int key) {
+        auto it = key_to_node.find(key);
+        if (it == key_to_node.end()) // 没有这本书
+            return nullptr;
+        auto node = it->second; // 有这本书
+        remove(node); // 把这本书抽出来
+        push_front(node); // 放在最上面
+        return node;
+    }
+
+public:
+    LRUCache(int capacity) : capacity(capacity), dummy(new Node()) {
+        dummy->prev = dummy;
+        dummy->next = dummy;
+    }
+
+    int get(int key) {
+        auto node = get_node(key);
+        return node ? node->value : -1;
+    }
+
+    void put(int key, int value) {
+        auto node = get_node(key);
+        if (node) { // 有这本书
+            node->value = value; // 更新 value
+            return;
+        }
+        key_to_node[key] = node = new Node(key, value); // 新书
+        push_front(node); // 放在最上面
+        if (key_to_node.size() > capacity) { // 书太多了
+            auto back_node = dummy->prev;
+            key_to_node.erase(back_node->key);
+            remove(back_node); // 去掉最后一本书
+            delete back_node; // 释放内存
+        }
+    }
+};
+
+作者：灵茶山艾府
+链接：https://leetcode.cn/problems/lru-cache/solutions/2456294/tu-jie-yi-zhang-tu-miao-dong-lrupythonja-czgt/
+来源：力扣（LeetCode）
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+```
+
+时间复杂度：所有操作都是O(1)
+
+空间复杂度：O(min(p, capacity))，其中 p为 put的调用次数。
+
+25、[二叉树的层序遍历](https://leetcode.cn/problems/binary-tree-level-order-traversal/)
+
+BFS：我们可以想到最朴素的方法是用一个二元组 (node, level) 来表示状态，它表示某个节点和它所在的层数，每个新进队列的节点的 level 值都是父亲节点的 level 值加一。最后根据每个点的 level 对点进行分类，分类的时候我们可以利用哈希表，维护一个以 level 为键，对应节点值组成的数组为值，广度优先搜索结束以后按键 level 从小到大取出所有值，组成答案返回即可。
+
+考虑如何优化空间开销：如何不用哈希映射，并且只用一个变量 node 表示状态，实现这个功能呢？
+
+我们可以用一种巧妙的方法修改广度优先搜索：
+
+（1）首先根元素入队；
+（2）当队列不为空的时候：求当前队列的长度 s_i；依次从队列中取s_i个元素进行拓展，然后进入下一次迭代。
+
+它和普通广度优先搜索的区别在于，普通广度优先搜索每次只取一个元素拓展，而这里每次取 s_i 个元素。在上述过程中的第 i次迭代就得到了二叉树的第 i层的 s_i个元素。
+
+为什么这么做是对的呢？我们观察这个算法，可以归纳出这样的***循环不变式***：第 i 次迭代前，队列中的所有元素就是第 i 层的所有元素，并且按照从左向右的顺序排列。证明它的三条性质（你也可以把它理解成数学归纳法）：
+
+（1）i=1 的时候，队列里面只有 `root`，是唯一的层数为 1的元素，因为只有一个元素，所以也显然满足「从左向右排列」；
+
+（2）如果 i=k 时性质成立，即第 k 轮中出队的s_k 个元素，是第 k 层的所有元素，并且顺序从左到右。因为对树进行广度优先搜索的时候由第k层的点拓展出的点一定也只能是 k+1 层的点，并且 k+1层的点只能由第 k 层的点拓展到，所以由这 s_k个点能拓展到下一层所有的 s_{k+1} 个点。又因为队列的先进先出（FIFO）特性，既然第 k 层的点的出队顺序是从左向右，那么第k + 1 层也一定是从左向右。至此，我们已经可以通过数学归纳法证明循环不变式的正确性。
+
+（3）因为该循环不变式是正确的，所以按照这个方法迭代之后每次迭代得到的也就是当前层的层次遍历结果。**至此，我们证明了算法是正确的。**
+
